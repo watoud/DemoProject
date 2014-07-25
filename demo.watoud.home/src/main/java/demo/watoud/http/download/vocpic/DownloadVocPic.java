@@ -22,13 +22,36 @@ import demo.watoud.http.download.DownloadPic;
 public class DownloadVocPic
 {
 
-	private static final String	PIC_MAIN_PAGE	= "http://bbs.voc.com.cn/mm/index.php?type=1";
+	private static final String PIC_MAIN_PAGE = "http://bbs.voc.com.cn/mm/index.php?type=1";
 
 	/**
 	 * @param args
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException
+	{
+		String url = "http://bbs.voc.com.cn/mm/meinv-6051268-19-1.html";
+		File parent = new File("C:\\zfile\\develop\\http\\download");
+
+		File downloadFold = new File(parent, String.valueOf(System
+				.currentTimeMillis()));
+		downloadFold.mkdir();
+
+		String contents = DownloadHelper.downloadContents(url);
+
+		Collection<String> jpgUrls = picUrlFormContents(contents);
+		DownloadPic downloader = new DownloadPic();
+
+		int count = 0;
+		for (String jpgUrl : jpgUrls)
+		{
+			downloader.download(jpgUrl, downloadFold);
+			++count;
+			System.out.println("The " + count + "th pic...");
+		}
+	}
+
+	public static void downLoadAll() throws IOException, HttpException
 	{
 		int suiteCount = 0;
 		int currentSuiteNum = 0;
@@ -69,7 +92,6 @@ public class DownloadVocPic
 			}
 
 		}
-
 	}
 
 	public static Collection<String> picsHttpUrls() throws IOException,
@@ -100,7 +122,8 @@ public class DownloadVocPic
 
 	public static Collection<String> picUrlFormContents(String contents)
 	{
-		Collection<String> targets = DownloadHelper.matchers(contents, "imgList.*jpg");
+		Collection<String> targets = DownloadHelper.matchers(contents,
+				"imgList.*jpg");
 		Collection<String> result = new HashSet<String>();
 
 		for (String s : targets)
@@ -114,5 +137,4 @@ public class DownloadVocPic
 		return result;
 	}
 
-	
 }
