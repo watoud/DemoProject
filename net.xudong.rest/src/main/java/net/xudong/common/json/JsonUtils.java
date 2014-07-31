@@ -19,7 +19,7 @@ import org.apache.commons.io.IOUtils;
 public class JsonUtils
 {
 	/**
-	 * 把符合json格式的@{String}转换成@{JsonObject}
+	 * 把符合json格式的@See{String}转换成@See{JsonObject}
 	 * 
 	 * @param value
 	 * @return
