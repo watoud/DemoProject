@@ -1,0 +1,61 @@
+<?xml version="1.0" ?> 
+<project name ="project" default ="run">
+
+	<property  name ="src_local_path"  value ="C:\zfile\develop\build\src" />
+	<property  name ="src_source_path"  value ="C:\zfile\HomeProject\net.xudong.rest" />
+	<property  name ="tomcat_source_path"  value ="C:\zSoftware\apache-tomcat-8.0.3-windows-x64.zip" />
+	<property  name ="tomcat_local_path"  value ="C:\zfile\develop\build\tomcat" />
+	<property  name ="tomcat_local_tmp_path"  value ="C:\zfile\develop\build\tomcat_tmp" />
+	
+	
+	
+	<target  name="run">   
+        <!-- 拷贝源文件 -->
+		<delete dir="${src_local_path}" deleteonexit="true" />
+		<mkdir dir="${src_local_path}" />
+		
+		<copy todir="${src_local_path}">
+			<fileset dir="${src_source_path}" />
+		</copy>
+		
+		<!--编译工程-->
+		<exec executable="cmd" failonerror="true" dir="${src_local_path}" >  
+            <arg line="/c mvn clean package -Dmaven.test.skip=true"  />  
+        </exec> 
+		
+		<!--解压tomcat-->
+		<delete dir="${tomcat_local_tmp_path}" deleteonexit="true" />
+		<delete dir="${tomcat_local_path}" deleteonexit="true" />
+		
+		<unzip src="${tomcat_source_path}"
+			dest="${tomcat_local_tmp_path}">
+		</unzip>
+		
+		<copy todir="${tomcat_local_path}">
+			<fileset dir="${tomcat_local_tmp_path}/apache-tomcat-8.0.3" />
+		</copy>
+		<delete dir="${tomcat_local_tmp_path}" deleteonexit="true" />
+		
+		<delete includeemptydirs="true" deleteonexit="true" >
+			<fileset dir="${tomcat_local_path}/webapps" includes="**/*"/>
+		</delete>
+		
+		<!--解压war文件-->
+		<unwar dest="${tomcat_local_path}/webapps/restweb" >
+			<fileset dir="${src_local_path}/target">
+				<include name="**/*.war"/>
+			</fileset>
+		</unwar>
+		
+		<!--复制tomcat conf server.xml文件-->
+		<copy todir="${tomcat_local_path}" overwrite="true" >
+			<fileset dir="${src_local_path}/tools/tomcat"/>
+		</copy>
+		
+		<exec executable="cmd" failonerror="true" dir="${tomcat_local_path}/bin" >  
+            <arg line="/c startup.bat"  />  
+        </exec> 
+		
+    </target>
+
+</project>   
