@@ -6,8 +6,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
@@ -21,14 +19,11 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.alibaba.fastjson.JSONObject;
 
-import net.watoud.demo.http.download.douyin.model.UserShareVediosQueryResponse;
-import net.watoud.demo.http.download.douyin.model.UserShareVediosQueryResponse.Aweme;
+import net.watoud.demo.http.download.douyin.model.ChallengeIdVediosQueryResponse;
 
-public class DownLoaderByUserID {
-	private final static Pattern PATTERN = Pattern.compile("playAddr[ ]*:[ ]*\"(.*)\"");
+public class DownloadByChallenge {
 	private final static String DIR = "F:\\03.media\\movie\\download";
-	private final static String USER_SHARE_URL = "https://www.amemv.com/share/user/%s?timestamp=1533910818&utm_source=weibo&utm_campaign=client_share&utm_medium=android&app=aweme&iid=40179016321";
-	private final static String USER_INFOS_URL_PATTERN = "https://www.amemv.com/aweme/v1/aweme/post/?user_id=%s&max_cursor=%d&count=21&aid=1128";
+	private final static String CHANNEL_INFOS_URL_PATTERN = "https://www.iesdouyin.com/aweme/v1/challenge/aweme/?ch_id=%s&count=9&screen_limit=3&download_click_limit=3&cursor=%d&aid=1128";
 	private final static String VEDIO_DOWN_LOAD_URL_PATTERN = "https://aweme.snssdk.com/aweme/v1/playwm/?video_id=%s";
 	private final static HttpClient client = new HttpClient();
 	static {
@@ -40,53 +35,29 @@ public class DownLoaderByUserID {
 			System.err.println("usage： userId cursor");
 			return;
 		}
-		String[] userIDs = StringUtils.split(args[0], ",");
+		String[] challengeIDs = StringUtils.split(args[0], ",");
 		List<String> handled = new ArrayList<>();
-		if (userIDs != null && userIDs.length != 0) {
-			for (String userId : userIDs) {
-				downloadByUserId(userId, Integer.valueOf(args[1]));
-				handled.add(userId);
-				System.out.println("handled users:" + handled);
+		if (challengeIDs != null && challengeIDs.length != 0) {
+			for (String challenge : challengeIDs) {
+				downloadBychallengeId(challenge, Integer.valueOf(args[1]));
+				handled.add(challenge);
+				System.out.println("handled challenges:" + handled);
 			}
 		}
 	}
 
-	public static String getDytk(String userId) throws Exception {
-		String url = String.format(USER_SHARE_URL, userId);
-		HttpMethod method = new GetMethod(url);
-		// setHeaders(method);
-		int statusCode = client.executeMethod(method);
-		if (statusCode != HttpStatus.SC_OK) {
-			System.err.println("Failed to get user share query infos: " + method.getStatusLine());
-			return StringUtils.EMPTY;
-		}
-		String body = method.getResponseBodyAsString();
-		// System.out.println(body);
-		Pattern p = Pattern.compile("dytk: '(.*)'");
-		Matcher matcher = p.matcher(body);
-		while (matcher.find()) {
-			return matcher.group(1);
-		}
-		return StringUtils.EMPTY;
-	}
-
-	public static void downloadByUserId(String userId, int cursor) throws Exception {
+	public static void downloadBychallengeId(String userId, int cursor) throws Exception {
 		// 獲取所有分享的視頻
 		boolean hasMore = true;
 		long curCursor = cursor;
 		while (hasMore) {
-			String url = String.format(USER_INFOS_URL_PATTERN, userId, curCursor);
-			String signature = generateSignature(userId);
+			String url = String.format(CHANNEL_INFOS_URL_PATTERN, userId, curCursor);
+			String signature = generateSignature(userId, curCursor);
 			if (StringUtils.isEmpty(signature)) {
 				System.out.println("Failed to get signature");
 				continue;
 			}
-			String dytk=getDytk(userId);
-			if (StringUtils.isEmpty(dytk)) {
-				System.out.println("Failed to get Dytk");
-				continue;
-			}
-			url = url + "&_signature=" + signature + "&dytk=" + dytk;
+			url = url + "&_signature=" + signature;
 			HttpMethod method = new GetMethod(url);
 			setHeaders(method);
 			System.out.println("url:" + url);
@@ -96,8 +67,8 @@ public class DownLoaderByUserID {
 				return;
 			}
 			String content = method.getResponseBodyAsString();
-			// System.out.println(content);
-			UserShareVediosQueryResponse response = JSONObject.parseObject(content, UserShareVediosQueryResponse.class);
+			ChallengeIdVediosQueryResponse response = JSONObject.parseObject(content,
+					ChallengeIdVediosQueryResponse.class);
 			if (response == null || CollectionUtils.isEmpty(response.getAwemeList())) {
 				System.err.println("failed to parse response," + String.valueOf(content));
 				return;
@@ -109,7 +80,8 @@ public class DownLoaderByUserID {
 			int totalSize = response.getAwemeList().size();
 			int cur = 0;
 			// 处理每一个视频
-			for (Aweme ele : response.getAwemeList()) {
+			for (net.watoud.demo.http.download.douyin.model.ChallengeIdVediosQueryResponse.Aweme ele : response
+					.getAwemeList()) {
 				System.out.println("waitint 1s ...");
 				TimeUnit.SECONDS.sleep(1);
 				System.out.println("end ...");
@@ -153,10 +125,13 @@ public class DownLoaderByUserID {
 			}
 		}
 	}
-	
-	public static String generateSignature(String userId) throws Exception {
+
+	public static String generateSignature(String channelId, long cursor) throws Exception {
+
 		Process process = Runtime.getRuntime().exec(
-				"D:\\ProgramFiles\\nodejs\\node.exe  D:\\04.Sources\\amemv-crawler\\fuck-byted-acrawler.js " + userId);
+				"D:\\ProgramFiles\\nodejs\\node.exe  D:\\04.Sources\\amemv-crawler\\fuck-byted-acrawler.js "
+						+ (channelId + "9" + cursor)
+		);
 		int code = process.waitFor();
 		if (code != 0) {
 			System.out.println("Failed to generate signature, returned code is" + code);
@@ -179,13 +154,5 @@ public class DownLoaderByUserID {
 		mothed.setRequestHeader("upgrade-insecure-requests", "1");
 		mothed.setRequestHeader("User-Agent",
 				"Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1");
-	}
-
-	public static String parseVedioUrlFromHtml(String content) {
-		Matcher mathcer = PATTERN.matcher(content);
-		if (mathcer.find()) {
-			return mathcer.group(1);
-		}
-		return StringUtils.EMPTY;
 	}
 }

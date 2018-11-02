@@ -4,10 +4,10 @@ import java.util.List;
 
 import com.alibaba.fastjson.annotation.JSONField;
 
-public class UserShareVediosQueryResponse {
+public class ChallengeIdVediosQueryResponse {
 	@JSONField(name = "has_more")
 	private int hasMore;
-	@JSONField(name = "max_cursor")
+	@JSONField(name = "cursor")
 	private long maxCursor;
 	@JSONField(name = "aweme_list")
 	List<Aweme> awemeList;
@@ -19,6 +19,7 @@ public class UserShareVediosQueryResponse {
 	public void setMaxCursor(long maxCursor) {
 		this.maxCursor = maxCursor;
 	}
+
 	public List<Aweme> getAwemeList() {
 		return awemeList;
 	}
@@ -200,6 +201,5 @@ public class UserShareVediosQueryResponse {
 			this.shareCount = shareCount;
 		}
 	}
-
 
 }

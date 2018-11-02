@@ -74,35 +74,16 @@ public class DownLoadByMusicID {
 				// 处理每一个视频
 				for (Aweme ele : response.getAwemeList()) {
 					System.out.println("++++++++++++++++++++++++++++");
-					if (!StringUtils.endsWith(ele.getStatistics().getDiggCount(), "w")) {
-						System.out.println("已经到了非热门视频， 小心心小于一万，不再下载"); // 结果是按照热度降序排序的
-						return;
-					}
+					// if (!StringUtils.endsWith(ele.getStatistics().getDiggCount(), "w") &&
+					// Integer.valueOf(ele.getStatistics().getDiggCount())<6000) {
+					// System.out.println("已经到了非热门视频， 小心心小于6000，不再下载"); // 结果是按照热度降序排序的
+					// return;
+					// }
 					currentCur++;
-					System.out.println("waiting 5s ...");
-					TimeUnit.SECONDS.sleep(5);
+					System.out.println("waiting 3s ...");
+					TimeUnit.SECONDS.sleep(3);
 					System.out.println("end ...");
 					System.out.println("total size: " + totalSize + ", current size: " + currentCur + ", has more: " + hasMore);
-					// String shareUrl = ele.getShareInfo().getShareUrl();
-					// HttpMethod vedioShareInfoGet = new GetMethod(shareUrl);
-					// statusCode = client.executeMethod(vedioShareInfoGet);
-					// if (statusCode != HttpStatus.SC_OK) {
-					// System.err.println("Failed to get music relative vedio info, status: " +
-					// method.getStatusLine()
-					// + ", share url:"
-					// + shareUrl);
-					// continue;
-					// }
-					// String vedioInfo = vedioShareInfoGet.getResponseBodyAsString();
-					// if (StringUtils.isEmpty(vedioInfo)) {
-					// System.err.println("Vedio info is empty, share url:" + shareUrl);
-					// continue;
-					// }
-					// String vedioUrl = parseVedioUrlFromHtml(vedioInfo);
-					// if (StringUtils.isEmpty(vedioUrl)) {
-					// System.err.println("Failed to get vedio url, share url:" + shareUrl);
-					// continue;
-					// }
 					String vedioUri = ele.getVedioInfo().getPlayAddr().getUri();
 					String vedioUrl = String.format(VEDIO_DOWN_LOAD_URL_PATTERN, vedioUri);
 					System.out.println("vedioUrl:" + vedioUrl);
@@ -119,7 +100,9 @@ public class DownLoadByMusicID {
 					if (!fileDir.exists()) {
 						fileDir.mkdir();
 					}
-					FileOutputStream out = new FileOutputStream(new File(fileDir, musicId + "_" + ele.getId() + ".mp4"));
+					String uid = ele.getAuthor().getUid() == null ? "" : ele.getAuthor().getUid();
+					FileOutputStream out = new FileOutputStream(
+							new File(fileDir, musicId + "_" + ele.getId() + "_" + uid + ".mp4"));
 					out.write(vedioGet.getResponseBody());
 					out.close();
 					System.out.println(
